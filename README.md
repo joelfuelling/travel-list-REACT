@@ -56,3 +56,81 @@ CHAT GPT: https://chat.openai.com/share/244c6673-fdcd-47c8-bbb4-62fc5e83d9fe
 - ALWAYS start with local state. That is, state that's only needed for the component it's housed on, and any child components.
 
 - Global state is shared state (Context API, Redux) that is ACCESSIBLE TO EVERY COMPONENT in the entire application.
+
+- When and where?
+
+So, you need to store some data...
+
+1 - Will data change at some point? 
+    YES - go to 2.
+    NO - Create a regular const variable.
+2 - Can it be computed from existing state props?
+    YES - Derive state
+    NO - go to 3.
+3 - Should it re-render component?
+    YES - Place a new piece of state in component
+    NO - Ref (useRef, more on this later) - You're done!
+
+If #3 was YES...
+
+4 - Is it only used by this component?
+    YES - leave in component
+    NO - Also used by a child component?
+        YES - Pass to children via props
+        NO - Used by one or more sibling components?
+            YES - Lift state up to first common parent.
+       
+# Lifting up State
+
+- Below, how would the total component get access to the coupon state?
+- Follow the diagram you printed out to step 8, where because "state is being shared by one or a few sibling components", you have to lift it up to the nearest parent component.
+
+                Checkout
+                    |
+            ----------------
+            |               |   
+          Total          Promotions (coupons, setCoupons)
+
+- Because it's only "one-way data flow" in react, data cannot simply be passed as a prop, that's just not how it works.
+- To "share" state with componenents that are higher up or next to the current component, we have to lift the state to the nearest parent component of all components that need the piece of state in question.
+- Here, we we would remove the coupons state from Promotions and place it in the Checkout component.
+- So...
+
+                Checkout (coupons, setCoupons) - State lifted to the closest COMMON parent.
+                    |
+            ----------------
+            |               |   
+          Total          Promotions 
+        {coupon} prop  {coupon, setCoupons} prop
+
+- What if we want to add a new coupon? We want to update the coupon state, which now lives in the parent component, not the promotions component. It only receives it via props, but we cannot mutate props! 
+- We simply pass it the setCoupon function as a prop :D
+
+# Derived State
+
+- Derived: State that is copmuted from an existing piece of state of from props
+
+- *** ALWAYS PREFER DERIVED STATE WHEN YOU CAN ***
+
+- *** WATCH OUT *** 
+1 - THREE separate pieces of state, even though numItems and totalPrice depend on 'cart'...
+2 - Need to keep them in sync (update TOGETHER)
+3 - 3 state updates will cause 3 re-renders :(
+
+const [cart, setCart] = useState([
+    { name: "JavaScript Course", price: 15.99 },
+    { name: "Node.js Bootcamp", price: 14.99},
+])
+
+--- WRONG ---
+const [numItems, setNumItems] = useState(2)
+const [totalPrice, setTotalPrice] = useState(30.98)
+
+- *** INSTEAD *** - DERIVE state using cart.length, and cart.reduce()!
+
+const numItems = cart.length
+const totalPrice =
+    cart.reduce((acc, cur) =>  acc + cur.price ,0)
+
+# Calculating statistics as derived state
+

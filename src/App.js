@@ -3,11 +3,13 @@ import { useState } from "react"
 
 const initialItems = [
   { id: 1, description: "Passports", quantity: 2, packed: false},
-  { id: 2, description: "Socks", quantity: 12, packed: true},
+  { id: 2, description: "Socks", quantity: 12, packed: false},
   { id: 3, description: "Charger", quantity: 1, packed: false}
 ]
 
 export default function App() {
+  // 'items' state has been lifted out of the form component and placed here since the PackingList component and
+  // Default 'items' state is the InitialItems array declared above. 
   const [items, setItems] = useState(initialItems)
 
   function handleAddItems(item) {
@@ -16,15 +18,32 @@ export default function App() {
   }
 
   function handleDeleteItems(id) {
-    setItems(items=> items.filter((item) => item.id !== id))
+    setItems(items=> 
+      items.filter((item) =>
+       item.id !== id
+       ))
   }
+
+  function handleToggleItem(id) {
+    setItems(items => 
+      items.map((item) => 
+        item.id === id 
+        // Create a new object with the item.packed status set to the opposite of it's current status.
+        ? {...item, packed: !item.packed} 
+        : item
+    ))
+  }
+
+  
+
   return (
+    // Below we pass props to each component (onAdditems, items, onDeleteItem), all of which has a function or 'prop' (ie., items) declared in this component.
     <>
     <div className="app">
     <Logo />
     <Form onAddItems={handleAddItems} />
-    <PackingList items={items} onDeleteItem={handleDeleteItems}/>
-    <Stats />
+    <PackingList items={items} onDeleteItem={handleDeleteItems} onToggleItem={handleToggleItem}/>
+    <Stats items={items}/>
     </div>
     </>
   )
@@ -67,7 +86,8 @@ function Form({onAddItems}) {
     <>
     <form className="add-form" onSubmit={handleSubmit}> 
       <h3>What do you need for you 😻 trip?</h3>
-        <select onChange={(e) => setQuantity(Number(e.target.value))}
+        <select onChange={(e) => 
+        setQuantity(Number(e.target.value))}
         value={quantity}>
           {/* Create an array with 20 indexes, then map it/fill it in with 1 through 20, using <option>s within the <select/> */}
           {Array.from(
@@ -98,31 +118,50 @@ function Form({onAddItems}) {
     </>
   )
 }
-function PackingList({ items, onDeleteItem }) {
+function PackingList({ items, onDeleteItem, onToggleItem }) {
   return (
     <>
     <div className="list"> 
       <ul>
-        {items.map((item) => <Item item={item} onDeleteItem={onDeleteItem} key={item.id} />)}
+        {items.map((item) => <Item 
+        item={item} 
+        onDeleteItem={onDeleteItem} 
+        onToggleItem={onToggleItem} 
+        key={item.id} />)}
       </ul>
     </div>
     </>
   )
 }
-
-function Item({item, onDeleteItem}) {
+// item and OnDeleteItem prop passed down from Parent App() component.
+function Item({item, onDeleteItem, onToggleItem}) {
   return (
     <li>
-      <span>{item.quantity}</span>
-      <span style={item.packed ? {textDecoration: "line-through"} : {}}>{item.description}</span>
+      <input 
+        type="checkbox" 
+          value={item.packed} 
+            onChange={() => onToggleItem(item.id)}
+      >
+      </input>
+      <span 
+      style={item.packed 
+        ? {textDecoration: "line-through"} 
+        : {}}
+      >
+        {item.quantity} 
+        {item.description}
+      </span>
+
+      {/* DO NOT FORGET to ACTUALLY call the function onDeleteItem only when the onClick event happens by placing it within '() =>' */}
       <button onClick={() => onDeleteItem(item.id)}> ❌ </button>
     </li>
   )
 }
-function Stats() {
+function Stats({items}) {
   return (
     <>
-    <footer className="stats">You have X items on your list, and you already packed x (X%)</footer>
+    <footer className="stats">{`You have ${items.length} items on your list, and you already packed (${""}%)`}</footer>
     </>
   )
 }
+
