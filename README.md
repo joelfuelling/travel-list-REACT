@@ -134,3 +134,6 @@ const totalPrice =
 
 # Calculating statistics as derived state
 
+let numItems = items.length
+  let numPacked = items.filter((item) => item.packed)
+  const percentage =  Number((numPacked.length /numItems * 100).toFixed(0))
